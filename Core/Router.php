@@ -27,20 +27,44 @@ class Router
     public function add(string $route, array $params = []): void
     {
         // Wanted regexp = /^(?P<controller>[a-z-]+)\/(?P<action>[a-z-]+)$/
+        echo '<pre>';
+        var_dump($route);
+        echo '<br>';
+        echo '</pre>';
 
         // Convert the route to a regular expression: escape forward slashes
         $route = preg_replace('/\//', '\\/', $route);
         // Replacing / to \/
 
+        echo '<pre>';
+        var_dump($route);
+        echo '<br>';
+        echo '</pre>';
+
         // Convert variables e.g. {controller}
         $route = preg_replace('/\{([a-z]+)\}/', '(?P<\1>[a-z-]+)', $route);
         // Replacing {controller}/{index} to (?P<controller>[a-z-]+)\/(?P<action>[a-z-]+)
 
+        echo '<pre>';
+        var_dump($route);
+        echo '<br>';
+        echo '</pre>';
+
         // Convert variables with custom regular expressions e.g. {id:\d+}
         $route = preg_replace('/\{([a-z]+):([^\}]+)\}/', '(?P<\1>\2)', $route);
 
+        echo '<pre>';
+        var_dump($route);
+        echo '<br>';
+        echo '</pre>';
+
         // Add start and end delimiters, and case-insensitive flag
         $route = '/^' . $route . '$/i';
+
+        echo '<pre>';
+        var_dump($route);
+        echo '<br>';
+        echo '</pre>';
 
         $this->routes[$route] = $params;
     }
@@ -115,8 +139,22 @@ class Router
               [2]=>
               string(3) "new"
             }*/
+
+        var_dump($url);
+        echo '<br>';
         foreach ($this->routes as $route => $params) {
+            echo '<pre>';
+            var_dump($route);
+            echo '</pre>';
+
+            echo '<pre>';
+            var_dump($params);
+            echo '</pre>';
             if (preg_match($route, $url, $matches)) {
+                echo $route;
+                echo '<pre>';
+                var_dump($matches);
+                echo '</pre>';
                 foreach ($matches as $key => $match) {
                     // is_string to only get the keys that aren't indexed key numbers.
                     if (is_string($key)) {
@@ -140,5 +178,63 @@ class Router
     public function getParams(): array
     {
         return $this->params;
+    }
+
+    /**
+     *
+     *
+     * @param string $url The route URL
+     *
+     * @return void
+     */
+    public function dispatch(string $url): void
+    {
+        if ($this->match($url)) {
+            $controller = $this->params['controller'];
+            $controller = $this->convertToStudlyCaps($controller);
+
+            if (class_exists($controller)) {
+                $controller_object = new $controller;
+
+                $action = $this->params['action'];
+                $action = $this->convertToCamelCase($action);
+
+                if (is_callable([$controller_object, $action])) {
+                    $controller_object->$action();
+                } else {
+                    echo "Method $action (in controller $controller) not found.";
+                }
+            } else {
+                echo "Controller class $controller not found.";
+            }
+        } else {
+            echo 'No route matched.';
+        }
+    }
+
+    /**
+     * Convert the string with hyphens to StudlyCaps
+     * e.g. postauthors => PostAuthors
+     *
+     * @param string $string The string to convert
+     *
+     * @return string
+     */
+    protected function convertToStudlyCaps(string $string): string
+    {
+        return str_replace(' ', '', ucwords(str_replace('-', ' ', $string)));
+    }
+
+    /**
+     * Convert the string with hyphens to camelCase,
+     * e.g. add-new => addNew
+     *
+     * @param string $string The string to convert
+     *
+     * @return string
+     */
+    protected function convertToCamelCase(string $string): string
+    {
+        return lcfirst($this->convertToStudlyCaps($string));
     }
 }
