@@ -25,7 +25,6 @@ class Router
 
     protected function match(string $url): bool
     {
-        $params = [];
         foreach ($this->routes as $route) {
             if (preg_match($route, $url, $matches)) {
                 foreach ($matches as $key => $param) {
