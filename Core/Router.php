@@ -27,44 +27,44 @@ class Router
     public function add(string $route, array $params = []): void
     {
         // Wanted regexp = /^(?P<controller>[a-z-]+)\/(?P<action>[a-z-]+)$/
-        echo '<pre>';
-        var_dump($route);
-        echo '<br>';
-        echo '</pre>';
+//        echo '<pre>';
+//        var_dump($route);
+//        echo '<br>';
+//        echo '</pre>';
 
         // Convert the route to a regular expression: escape forward slashes
         $route = preg_replace('/\//', '\\/', $route);
         // Replacing / to \/
 
-        echo '<pre>';
-        var_dump($route);
-        echo '<br>';
-        echo '</pre>';
+//        echo '<pre>';
+//        var_dump($route);
+//        echo '<br>';
+//        echo '</pre>';
 
         // Convert variables e.g. {controller}
         $route = preg_replace('/\{([a-z]+)\}/', '(?P<\1>[a-z-]+)', $route);
         // Replacing {controller}/{index} to (?P<controller>[a-z-]+)\/(?P<action>[a-z-]+)
-
-        echo '<pre>';
-        var_dump($route);
-        echo '<br>';
-        echo '</pre>';
+//echo 'Aquiiiiiiiiii: ' . $route;
+//        echo '<pre>';
+//        var_dump($route);
+//        echo '<br>';
+//        echo '</pre>';
 
         // Convert variables with custom regular expressions e.g. {id:\d+}
         $route = preg_replace('/\{([a-z]+):([^\}]+)\}/', '(?P<\1>\2)', $route);
 
-        echo '<pre>';
-        var_dump($route);
-        echo '<br>';
-        echo '</pre>';
+//        echo '<pre>';
+//        var_dump($route);
+//        echo '<br>';
+//        echo '</pre>';
 
         // Add start and end delimiters, and case-insensitive flag
         $route = '/^' . $route . '$/i';
 
-        echo '<pre>';
-        var_dump($route);
-        echo '<br>';
-        echo '</pre>';
+//        echo '<pre>';
+//        var_dump($route);
+//        echo '<br>';
+//        echo '</pre>';
 
         $this->routes[$route] = $params;
     }
@@ -111,6 +111,7 @@ class Router
      * @param string $url The route URL
      *
      * @return boolean true if a match found, false otherwise
+     * @throws \Exception
      */
     public function match(string $url): bool
     {
@@ -140,21 +141,21 @@ class Router
               string(3) "new"
             }*/
 
-        var_dump($url);
-        echo '<br>';
+//        var_dump($url);
+//        echo '<br>';
         foreach ($this->routes as $route => $params) {
-            echo '<pre>';
-            var_dump($route);
-            echo '</pre>';
+//            echo '<pre>';
+//            var_dump($route);
+//            echo '</pre>';
 
-            echo '<pre>';
-            var_dump($params);
-            echo '</pre>';
+//            echo '<pre>';
+//            var_dump($params);
+//            echo '</pre>';
             if (preg_match($route, $url, $matches)) {
-                echo $route;
-                echo '<pre>';
-                var_dump($matches);
-                echo '</pre>';
+//                echo $route;
+//                echo '<pre>';
+//                var_dump($matches);
+//                echo '</pre>';
                 foreach ($matches as $key => $match) {
                     // is_string to only get the keys that aren't indexed key numbers.
                     if (is_string($key)) {
@@ -163,7 +164,14 @@ class Router
                 }
 
                 $this->params = $params;
-                return true;
+
+                if (preg_match('/action$/i', $this->params['action']) === 0) {
+                    return true;
+                } else {
+                    throw new \Exception('Method ' . $this->params["action"] .
+                        ' cannot be called directly - remove the Action suffix to call this method');
+                }
+
 //        }
             }
         }
@@ -186,24 +194,25 @@ class Router
      * @param string $url The route URL
      *
      * @return void
+     * @throws \Exception
      */
     public function dispatch(string $url): void
     {
+        $url = $this->removeQueryStringVariables($url);
+
         if ($this->match($url)) {
             $controller = $this->params['controller'];
             $controller = $this->convertToStudlyCaps($controller);
-
+//            $controller = "MVCFramework\\App\\Controllers\\$controller";
+            $controller = $this->getNamespace() . $controller;
             if (class_exists($controller)) {
-                $controller_object = new $controller;
+                $controller_object = new $controller($this->params);
 
                 $action = $this->params['action'];
                 $action = $this->convertToCamelCase($action);
 
-                if (is_callable([$controller_object, $action])) {
-                    $controller_object->$action();
-                } else {
-                    echo "Method $action (in controller $controller) not found.";
-                }
+                $controller_object->$action();
+
             } else {
                 echo "Controller class $controller not found.";
             }
@@ -236,5 +245,59 @@ class Router
     protected function convertToCamelCase(string $string): string
     {
         return lcfirst($this->convertToStudlyCaps($string));
+    }
+
+    /**
+     * Remove the query string variables from the URL (if any). As the full
+     * query string is used for the route, any variables at the end will need
+     * to be removed before the route is matched to the routing table. For
+     * example:
+     *
+     * URL                           $_SERVER['QUERY_STRING']  Route
+     * --------------------------------------------------------------------
+     * localhost                     ''                        ''
+     * localhost/?                    ''                        ''
+     * localhost/?page=1             page=1                    ''
+     * localhost/posts?page=1        posts&page=1              posts
+     * localhost/posts/index         posts/index               posts/index
+     * localhost/posts/index?page=1  posts/index&page=1        posts/index
+     *
+     * A URL of the format localhost/?page (one variable, no value) won't
+     * work however. (NB. The .htaccess file converts the first ? to a & when
+     * it's passed through to the $_SERVER variable)
+     *
+     * @param string $url The full URL
+     *
+     * @return string The URL with the query string variables removed
+     */
+    protected function removeQueryStringVariables(string $url): string
+    {
+        if ($url === '') {
+            return $url;
+        }
+        $parts = explode('&', $url, 2);
+
+        return (!str_contains($parts[0], '=')) ? $parts[0] : '';
+
+        // Before PHP 8: strpos($parts[0], '=') === false
+        // /posts/index=1 for example shouldn't be allowed
+        // so the user is sent back the main page "/"
+
+    }
+
+    /**
+     * Get the namespace for the controller class. The namespace defined in the
+     * parameters is added if present.
+     *
+     * @return string The request URL
+     */
+    protected function getNamespace(): string
+    {
+        $namespace = "MVCFramework\\App\\Controllers\\";
+
+        if (array_key_exists('namespace', $this->params)) {
+            $namespace .= $this->params['namespace'] . '\\';
+        }
+        return $namespace;
     }
 }
