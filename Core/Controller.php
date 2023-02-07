@@ -49,7 +49,7 @@ abstract class Controller
      */
     protected function before(): mixed
     {
-
+        return null;
     }
 
     /**
