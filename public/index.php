@@ -6,14 +6,16 @@ declare(strict_types=1);
 
 //use MVCFramework\Core\Router;
 
-spl_autoload_register(function ($class) {
-    $root = dirname(__DIR__); // get the app directory
-    $class = str_replace('MVCFramework\\', '', $class);
-    $file = $root . '/' . str_replace('\\', '/', $class) . '.php';
-    if (is_readable($file)) {
-        require $file;
-    }
-});
+require_once dirname(__DIR__) . '/vendor/autoload.php';
+
+//spl_autoload_register(function ($class) {
+//    $root = dirname(__DIR__); // get the app directory
+//    $class = str_replace('MVCFramework\\', '', $class);
+//    $file = $root . '/' . str_replace('\\', '/', $class) . '.php';
+//    if (is_readable($file)) {
+//        require $file;
+//    }
+//});
 
 $router = new MVCFramework\Core\Router();
 
