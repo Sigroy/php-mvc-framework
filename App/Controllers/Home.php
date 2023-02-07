@@ -2,6 +2,8 @@
 
 namespace MVCFramework\App\Controllers;
 
+use MVCFramework\Core\View;
+
 class Home extends \MVCFramework\Core\Controller
 {
 
@@ -12,7 +14,7 @@ class Home extends \MVCFramework\Core\Controller
      */
     protected function before(): bool
     {
-        echo "(before) ";
+//        echo "(before) ";
         return true;
     }
 
@@ -23,7 +25,7 @@ class Home extends \MVCFramework\Core\Controller
      */
     protected function after(): void
     {
-        echo " (after)";
+//        echo " (after)";
     }
 
     /**
@@ -33,6 +35,14 @@ class Home extends \MVCFramework\Core\Controller
      */
     public function indexAction()
     {
-        echo 'Hello from the index action in the Home controller';
+//        echo 'Hello from the index action in the Home controller';
+        /*View::render('Home/index.html', [
+            'name' => 'Dave',
+            'colours' => ['red', 'green', 'blue']
+        ]);*/
+        View::renderTemplate('Home/index.html', [
+            'name' => 'Dave',
+            'colours' => ['red', 'green', 'blue'],
+        ]);
     }
 }

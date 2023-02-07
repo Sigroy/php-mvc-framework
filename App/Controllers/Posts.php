@@ -1,6 +1,10 @@
 <?php
 
 namespace MVCFramework\App\Controllers;
+
+use \MVCFramework\Core\View;
+use \MVCFramework\App\Models\Post;
+
 class Posts extends \MVCFramework\Core\Controller
 {
     /**
@@ -10,9 +14,11 @@ class Posts extends \MVCFramework\Core\Controller
      */
     public function indexAction(): void
     {
-        echo 'Hello from the index action in the Posts controller!';
-        echo '<p>Query string parameters: <pre>' .
-            htmlspecialchars(print_r($_GET, true)) . '</pre></p>';
+        $posts = Post::getAll();
+//        echo 'Hello from the index action in the Posts controller!';
+        View::renderTemplate('Posts/index.html', [
+            'posts' => $posts
+        ]);
     }
 
     /**
