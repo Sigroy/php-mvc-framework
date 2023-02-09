@@ -27,6 +27,7 @@ abstract class Controller
      * @param string $name
      * @param array $arguments
      * @return void
+     * @throws \Exception
      */
     public function __call(string $name, array $arguments): void
     {
@@ -38,7 +39,8 @@ abstract class Controller
                 $this->after();
             }
         } else {
-            echo 'Method ' . str_replace('Action', '', $method) . ' not found in controller ' . get_class($this);
+//            echo 'Method ' . str_replace('Action', '', $method) . ' not found in controller ' . get_class($this);
+            throw new \Exception("Method $method not found in controller " . get_class($this));
         }
     }
 
