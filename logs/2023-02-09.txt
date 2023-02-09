@@ -1,0 +1,5 @@
+[09-Feb-2023 17:39:59 America/Mexico_City] Uncaught exception: 'Exception' with message: 'Method homeAction not found in controller MVCFramework\App\Controllers\Posts'
+Stack trace: #0 D:\xampp\htdocs\MVCFramework\Core\Router.php(214): MVCFramework\Core\Controller->__call('home', Array)
+#1 D:\xampp\htdocs\MVCFramework\public\index.php(57): MVCFramework\Core\Router->dispatch('posts/home')
+#2 {main}
+Thrown in 'D:\xampp\htdocs\MVCFramework\Core\Controller.php' on line 43
